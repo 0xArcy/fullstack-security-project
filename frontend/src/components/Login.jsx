@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { secureFetch } from '../api';
+import { parseApiResponse, secureFetch } from '../api';
 
 function Login({ onLogin }) {
   const navigate = useNavigate();
@@ -13,18 +13,13 @@ function Login({ onLogin }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await secureFetch('/auth/login', {
+      const response = await secureFetch('/auth/login', {
         method: 'POST',
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
-      
-      const contentType = res.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error(`API Unreachable (${res.status}). Is the Backend VM running?`);
-      }
 
-      const data = await res.json();
-      if (!res.ok) {
+      const data = await parseApiResponse(response);
+      if (!response.ok) {
         throw new Error(data.error || 'Login failed');
       }
 
@@ -40,7 +35,7 @@ function Login({ onLogin }) {
   return (
     <div>
       <h3>Login</h3>
-      {error && <p style={{color: 'red'}}>{error}</p>}
+      {error && <p className="error-text">{error}</p>}
       <form onSubmit={handleSubmit}>
         <div>
           <label>Username</label><br/>

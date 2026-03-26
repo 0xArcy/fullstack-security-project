@@ -4,10 +4,10 @@ const { body, validationResult } = require('express-validator');
 const sanitize = require('mongo-sanitize');
 const logger = require('../utils/logger');
 const User = require('../models/User');
+const Record = require('../models/Record');
 
 const router = express.Router();
 
-// Middleware to protect routes via Access Token
 const requireAuth = (req, res, next) => {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -24,44 +24,81 @@ const requireAuth = (req, res, next) => {
     }
 };
 
-// GET User Profile (testing authenticated data retrieval and decryption)
 router.get('/profile', requireAuth, async (req, res) => {
     try {
-        // Will decrypt email automatically due to Mongoose getter
         const user = await User.findById(req.userId);
-        if (!user) return res.status(404).json({ error: 'User not found' });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
 
         res.json({
             username: user.username,
-            email: user.email // Sent decrypted to the authorized client
+            email: user.email,
         });
     } catch (error) {
         logger.error('Profile fetch failed', { error: error.message });
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 
-// Demo Route for accepting form submissions (NoSQL injection validation)
+router.get('/records', requireAuth, async (req, res) => {
+    try {
+        const records = await Record.find({ userId: req.userId })
+            .sort({ createdAt: -1 })
+            .limit(20);
+
+        res.json({
+            records: records.map((record) => ({
+                id: record._id,
+                sensitiveData: record.sensitiveData,
+                createdAt: record.createdAt,
+            })),
+        });
+    } catch (error) {
+        logger.error('Record fetch failed', { error: error.message, userId: req.userId });
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 router.post('/submit', requireAuth, [
-    body('sensitiveData').trim().notEmpty().escape()
+    body('sensitiveData')
+        .isString()
+        .trim()
+        .isLength({ min: 1, max: 500 }),
 ], async (req, res) => {
     const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ error: 'Invalid request body' });
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ error: 'Invalid request body' });
+    }
 
-    const safeData = sanitize(req.body);
+    const safeData = sanitize(req.body.sensitiveData);
 
-    logger.info('Data Submitted', { 
-        action: 'data_submit', 
-        userId: req.userId, 
-        outcome: 'success',
-        // Mask the sensitive data before logging
-        maskedData: logger.maskData(safeData.sensitiveData) 
-    });
+    try {
+        const record = await Record.create({
+            userId: req.userId,
+            sensitiveData: safeData,
+        });
 
-    res.json({ 
-        message: 'Data successfully received and sanitised.',
-        received: safeData.sensitiveData // returning for preview in UI
-    });
+        logger.info('Data submitted', {
+            action: 'data_submit',
+            userId: req.userId,
+            ip: req.ip,
+            outcome: 'success',
+            maskedData: logger.maskData(safeData),
+        });
+
+        res.status(201).json({
+            message: 'Data successfully stored.',
+            record: {
+                id: record._id,
+                sensitiveData: record.sensitiveData,
+                createdAt: record.createdAt,
+            },
+        });
+    } catch (error) {
+        logger.error('Data submission failed', { error: error.message, userId: req.userId });
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
 
 module.exports = router;

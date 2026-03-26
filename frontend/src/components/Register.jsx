@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { secureFetch } from '../api';
+import { parseApiResponse, secureFetch } from '../api';
 
 function Register() {
   const navigate = useNavigate();
@@ -8,15 +8,22 @@ function Register() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const calculatePasswordStrength = (pwd) => {
-    // Basic entropy check
-    if (!pwd) return '';
-    let strength = 0;
-    if (pwd.length > 8) strength++;
-    if (/[A-Z]/.test(pwd)) strength++;
-    if (/[0-9]/.test(pwd)) strength++;
-    if (/[^A-Za-z0-9]/.test(pwd)) strength++;
-    return strength < 2 ? 'Weak' : strength < 4 ? 'Medium' : 'Strong';
+  const calculatePasswordStrength = (password) => {
+    if (!password) return '';
+
+    let poolSize = 0;
+    if (/[a-z]/.test(password)) poolSize += 26;
+    if (/[A-Z]/.test(password)) poolSize += 26;
+    if (/[0-9]/.test(password)) poolSize += 10;
+    if (/[^A-Za-z0-9]/.test(password)) poolSize += 33;
+
+    if (poolSize === 0) return 'Weak';
+
+    const entropyBits = Math.log2(poolSize) * password.length;
+
+    if (entropyBits < 40) return `Weak (${Math.round(entropyBits)} bits)`;
+    if (entropyBits < 60) return `Medium (${Math.round(entropyBits)} bits)`;
+    return `Strong (${Math.round(entropyBits)} bits)`;
   };
 
   const handleSubmit = async (e) => {
@@ -24,19 +31,15 @@ function Register() {
     setLoading(true);
     setError(null);
     try {
-      const res = await secureFetch('/auth/register', {
+      const response = await secureFetch('/auth/register', {
         method: 'POST',
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
 
-      const contentType = res.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error(`API Unreachable (${res.status}). Is the Backend VM running?`);
-      }
+      const data = await parseApiResponse(response);
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Registration failed');
+      if (!response.ok) {
+        throw new Error(data.error || 'Registration failed');
       }
       navigate('/login');
     } catch (err) {
@@ -49,7 +52,7 @@ function Register() {
   return (
     <div>
       <h3>Register</h3>
-      {error && <p style={{color: 'red'}}>{error}</p>}
+      {error && <p className="error-text">{error}</p>}
       <form onSubmit={handleSubmit}>
         <div>
           <label>Username</label><br/>

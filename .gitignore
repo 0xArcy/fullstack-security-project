@@ -7,6 +7,9 @@ yarn-error.log
 .env
 .env.production
 .env.local
+backend/.env
+frontend/.env
+frontend/.env.production
 
 # Build outputs
 /frontend/dist/
@@ -17,6 +20,7 @@ yarn-error.log
 .DS_Store
 *.pem
 *.key
-*.crtFullstack-Security-Assessment*.pdf
+*.crt
+Fullstack-Security-Assessment*.pdf
 *.docx
 *.txt

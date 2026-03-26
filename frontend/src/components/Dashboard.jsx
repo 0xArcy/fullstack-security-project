@@ -1,45 +1,65 @@
 import { useState, useEffect } from 'react';
-import { secureFetch } from '../api';
+import { parseApiResponse, secureFetch } from '../api';
 
 function Dashboard({ onLogout }) {
   const [profile, setProfile] = useState(null);
   const [sensitiveData, setSensitiveData] = useState('');
-  const [submissions, setSubmissions] = useState([]);
+  const [records, setRecords] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchDashboardData = async () => {
       try {
-        const res = await secureFetch('/data/profile');
-        if (res.ok) {
-          const data = await res.json();
-          setProfile(data);
-        } else {
+        const [profileResponse, recordsResponse] = await Promise.all([
+          secureFetch('/data/profile'),
+          secureFetch('/data/records'),
+        ]);
+
+        if (!profileResponse.ok || !recordsResponse.ok) {
           onLogout();
+          return;
         }
-      } catch (err) {
-        setError('Failed to fetch profile.');
+
+        const profileData = await parseApiResponse(profileResponse);
+        const recordsData = await parseApiResponse(recordsResponse);
+        setProfile(profileData);
+        setRecords(Array.isArray(recordsData.records) ? recordsData.records : []);
+      } catch (error) {
+        setError('Failed to load dashboard data.');
+      } finally {
+        setLoading(false);
       }
     };
-    fetchProfile();
+
+    fetchDashboardData();
   }, [onLogout]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+
     try {
-      const res = await secureFetch('/data/submit', {
+      const response = await secureFetch('/data/submit', {
         method: 'POST',
-        body: JSON.stringify({ sensitiveData })
+        body: JSON.stringify({ sensitiveData }),
       });
-      const data = await res.json();
-      if (res.ok) {
-        setSubmissions([...submissions, data.received]);
-        setSensitiveData('');
-      } else {
-        setError(data.error);
+
+      const data = await parseApiResponse(response);
+      if (!response.ok) {
+        throw new Error(data.error || 'Form submission failed');
       }
-    } catch (err) {
-      setError('Form submission failed.');
+
+      if (data.record) {
+        setRecords((prevRecords) => [data.record, ...prevRecords]);
+        setSensitiveData('');
+      }
+    } catch (error) {
+      setError(error.message || 'Form submission failed.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -48,7 +68,8 @@ function Dashboard({ onLogout }) {
     onLogout();
   };
 
-  if (!profile) return <p>Loading Skeleton...</p>;
+  if (loading) return <p>Loading dashboard...</p>;
+  if (!profile) return <p>Session expired.</p>;
 
   return (
     <div>
@@ -61,7 +82,7 @@ function Dashboard({ onLogout }) {
       <hr />
       
       <h4>Submit Protected Data</h4>
-      {error && <p style={{color: 'red'}}>{error}</p>}
+      {error && <p className="error-text">{error}</p>}
       <form onSubmit={handleSubmit}>
         <input 
           type="text" 
@@ -70,15 +91,17 @@ function Dashboard({ onLogout }) {
           placeholder="Try injecting <script>alert(1)</script>"
           required
         />
-        <button type="submit">Submit</button>
+        <button type="submit" disabled={submitting}>
+          {submitting ? 'Submitting...' : 'Submit'}
+        </button>
       </form>
 
       <h4>Submissions (Secured against XSS)</h4>
       <ul>
-        {submissions.map((sub, i) => (
-          // In React, rendering inside standard elements uses textContent automatically (Anti-XSS by default).
-          // NOT using dangerouslySetInnerHTML.
-          <li key={i}>{sub}</li>
+        {records.map((record) => (
+          <li key={record.id}>
+            {record.sensitiveData}
+          </li>
         ))}
       </ul>
     </div>
