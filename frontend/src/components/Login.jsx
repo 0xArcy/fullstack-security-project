@@ -18,6 +18,11 @@ function Login({ onLogin }) {
         body: JSON.stringify(formData)
       });
       
+      const contentType = res.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error(`API Unreachable (${res.status}). Is the Backend VM running?`);
+      }
+
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || 'Login failed');

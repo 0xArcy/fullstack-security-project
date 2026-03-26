@@ -28,6 +28,12 @@ function Register() {
         method: 'POST',
         body: JSON.stringify(formData)
       });
+
+      const contentType = res.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error(`API Unreachable (${res.status}). Is the Backend VM running?`);
+      }
+
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.error || 'Registration failed');
