@@ -20,7 +20,7 @@ function App() {
 
   return (
     <BrowserRouter>
-      <div style={{ maxWidth: '600px', margin: '0 auto', padding: '2rem' }}>
+      <div>
         <h2>Secure Application</h2>
         <Routes>
           <Route path="/register" element={<Register />} />
