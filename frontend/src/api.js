@@ -1,4 +1,4 @@
-export const BASE_URL = 'http://localhost:3000/api'; // Change to Godproxy IP later
+export const BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 // Global Token state. NEVER stored in localStorage/sessionStorage.
 let accessToken = null;

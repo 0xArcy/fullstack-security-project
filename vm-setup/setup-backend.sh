@@ -6,10 +6,11 @@ read DB_IP
 echo "Please insert the IP address or Domain of VM 1 (Frontend Proxy):"
 read FRONTEND_IP
 
-echo "1. Installing Node & PM2..."
+echo "1. Installing Node, npm & PM2..."
 sudo apt-get update
+sudo apt-get install -y curl
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt-get install -y nodejs
+sudo apt-get install -y nodejs npm
 sudo npm install -g pm2
 
 echo "2. Installing Backend Dependencies..."

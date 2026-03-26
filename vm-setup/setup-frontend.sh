@@ -7,9 +7,10 @@ read BACKEND_IP
 echo "1. Updating system..."
 sudo apt-get update && sudo apt-get upgrade -y
 
-echo "2. Installing Node.js & Nginx..."
+echo "2. Installing Node.js, npm & Nginx..."
+sudo apt-get install -y curl
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt-get install -y nodejs nginx
+sudo apt-get install -y nodejs npm nginx
 
 echo "3. Building the Secure React Application..."
 cd ../frontend
@@ -20,8 +21,10 @@ npm run build
 
 echo "4. Deploying Frontend to Web Root..."
 sudo mkdir -p /var/www/frontend
-sudo cp -r dist/* /var/www/frontend/
+# Ensure we copy contents correctly even with hidden files
+sudo cp -a dist/. /var/www/frontend/ 
 sudo chown -R www-data:www-data /var/www/frontend
+sudo chmod -R 755 /var/www/frontend
 
 echo "5. Configuring Godproxy (Nginx Proxy API)..."
 cd ../vm-setup
