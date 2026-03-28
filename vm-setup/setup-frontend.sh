@@ -3,8 +3,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Using a local directory to bypass Windows/Vagrant symlink restrictions
-SHARED_FRONTEND_DIR="/vagrant/frontend"
-LOCAL_FRONTEND_DIR="/home/vagrant/frontend"
+# SHARED_FRONTEND_DIR="/var/www/frontend"
+LOCAL_FRONTEND_DIR="/var/www/frontend"
 
 usage() {
   cat <<'USAGE'
@@ -62,10 +62,10 @@ sudo ln -sf /usr/bin/npm /usr/local/bin/npm || true
 # --- NATIVE DIRECTORY SYNC ---
 echo "[frontend] Syncing to native directory to fix Vite path issues..."
 sudo mkdir -p "$LOCAL_FRONTEND_DIR"
-sudo chown -R vagrant:vagrant "$LOCAL_FRONTEND_DIR"
+sudo chown -R $USER:$USER "$LOCAL_FRONTEND_DIR"
 
 # Sync files while excluding node_modules to ensure a fresh, native build
-rsync -av --delete --exclude='node_modules' "$SHARED_FRONTEND_DIR/" "$LOCAL_FRONTEND_DIR/"
+# rsync -av --delete --exclude='node_modules' "$SHARED_FRONTEND_DIR/" "$LOCAL_FRONTEND_DIR/"
 
 cd "$LOCAL_FRONTEND_DIR"
 

@@ -2,8 +2,8 @@
 set -euo pipefail
 
 # --- CONFIGURATION ---
-SHARED_BACKEND_DIR="/vagrant/backend"
-LOCAL_BACKEND_DIR="/home/vagrant/backend"
+# SHARED_BACKEND_DIR="/vagrant/backend"
+LOCAL_BACKEND_DIR="/var/www/backend"
 
 usage() {
   cat <<'USAGE'
@@ -69,8 +69,8 @@ done
 
 if [[ -n "$CREDS_FILE" && -f "$CREDS_FILE" ]]; then
   source "$CREDS_FILE"
-elif [[ -f "/vagrant/secure-db-credentials.env" ]]; then
-  source "/vagrant/secure-db-credentials.env"
+elif [[ -f "./secure-db-credentials.env" ]]; then
+  source "./secure-db-credentials.env"
 fi
 
 if [[ -z "$DB_HOST" || -z "$FRONTEND_ORIGIN" || -z "$DB_PASS" ]]; then
@@ -106,10 +106,10 @@ fi
 echo "[backend] Syncing files..."
 sudo mkdir -p "$LOCAL_BACKEND_DIR"
 # CRITICAL: Ensure the directory belongs to vagrant BEFORE npm runs
-sudo chown -R vagrant:vagrant "$LOCAL_BACKEND_DIR"
-rsync -av --delete --exclude='node_modules' "$SHARED_BACKEND_DIR/" "$LOCAL_BACKEND_DIR/"
+sudo chown -R $USER:$USER "$LOCAL_BACKEND_DIR"
+# rsync -av --delete --exclude='node_modules' "$SHARED_BACKEND_DIR/" "$LOCAL_BACKEND_DIR/"
 # Re-apply ownership after rsync just in case
-sudo chown -R vagrant:vagrant "$LOCAL_BACKEND_DIR"
+sudo chown -R $USER:$USER "$LOCAL_BACKEND_DIR"
 
 # --- 6. PROJECT INSTALLATION ---
 cd "$LOCAL_BACKEND_DIR"

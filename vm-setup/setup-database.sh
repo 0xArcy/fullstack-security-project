@@ -7,7 +7,7 @@ DB_NAME="${DB_NAME:-secure_db}"
 DB_USER="${DB_USER:-secure_app_user}"
 # Use the password from args/env if provided, else generate
 DB_PASS="${DB_PASS:-secure_password_123}"
-CREDS_FILE="/vagrant/secure-db-credentials.env"
+# CREDS_FILE="/secure-db-credentials.env"
 PRIMARY_DB_IP=$(hostname -I | awk '{print $2}')
 [[ -z "$PRIMARY_DB_IP" ]] && PRIMARY_DB_IP=$(hostname -I | awk '{print $1}')
 
