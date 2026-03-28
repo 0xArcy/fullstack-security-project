@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Using a local directory to bypass Windows/Vagrant symlink restrictions
 # SHARED_FRONTEND_DIR="/var/www/frontend"
-LOCAL_FRONTEND_DIR="/var/www/frontend"
+LOCAL_FRONTEND_DIR="../frontend"
 
 usage() {
   cat <<'USAGE'
@@ -86,7 +86,7 @@ echo "[frontend] Rendering nginx config..."
 export BACKEND_HOST BACKEND_PORT SERVER_NAME
 
 # Point to the actual shared directory where the file lives
-NGINX_CONF_SOURCE="/vagrant/vm-setup/godproxy-nginx.conf"
+NGINX_CONF_SOURCE="../vm-setup/godproxy-nginx.conf"
 if [[ -f "$NGINX_CONF_SOURCE" ]]; then
   envsubst '$BACKEND_HOST $BACKEND_PORT $SERVER_NAME' \
     < "$NGINX_CONF_SOURCE" \

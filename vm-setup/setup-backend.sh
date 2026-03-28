@@ -3,7 +3,7 @@ set -euo pipefail
 
 # --- CONFIGURATION ---
 # SHARED_BACKEND_DIR="/vagrant/backend"
-LOCAL_BACKEND_DIR="/var/www/backend"
+LOCAL_BACKEND_DIR="../backend"
 
 usage() {
   cat <<'USAGE'
