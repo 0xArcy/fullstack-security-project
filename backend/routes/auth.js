@@ -48,7 +48,7 @@ const loginValidation = [
 const validateRequest = (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        res.status(400).json({ error: 'Invalid request body' });
+        res.status(400).json({ error: 'Invalid request body', details: errors.array() });
         return false;
     }
     return true;

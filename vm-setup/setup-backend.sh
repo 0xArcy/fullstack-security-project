@@ -36,7 +36,7 @@ DB_USER="${DB_USER:-secure_app_user}"
 DB_PASS="${DB_PASS:-}"
 FRONTEND_ORIGIN="${FRONTEND_ORIGIN:-}"
 CLEAN_FRONTEND_ORIGIN=$(echo "${FRONTEND_ORIGIN}" | sed 's/\/$//')
-ALLOWED_ORIGINS="${CLEAN_FRONTEND_ORIGIN},https://localhost:8443,https://127.0.0.1:8443"
+ALLOWED_ORIGINS="${CLEAN_FRONTEND_ORIGIN},https://localhost,https://127.0.0.1"
 BACKEND_PORT="${BACKEND_PORT:-3000}"
 PROXY_IP="${PROXY_IP:-}"
 CREDS_FILE="${CREDS_FILE:-}"
@@ -115,7 +115,7 @@ sudo chown -R $USER:$USER "$LOCAL_BACKEND_DIR"
 cd "$LOCAL_BACKEND_DIR"
 echo "[backend] Installing dependencies as vagrant user..."
 # NEVER use sudo for npm install in a local home dir
-sudo -u vagrant npm install --no-audit --no-fund
+sudo -u $USER npm install --no-audit --no-fund
 
 # 7. ENVIRONMENT SETUP
 echo "[backend] Generating environment variables..."
@@ -159,7 +159,7 @@ sudo killall -9 node 2>/dev/null || true
 
 # Run the server in the background and redirect logs to a file
 cd "$LOCAL_BACKEND_DIR"
-sudo -u vagrant nohup node server.js > ./server.log 2>&1 &
+sudo -u $USER nohup node server.js > ./server.log 2>&1 &
 
 # Give it a few seconds to attempt a connection
 sleep 5
