@@ -24,3 +24,4 @@ frontend/.env.production
 Fullstack-Security-Assessment*.pdf
 *.docx
 *.txt
+.vagrant/
